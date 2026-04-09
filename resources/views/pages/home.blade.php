@@ -5,15 +5,62 @@
 @section('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <style>
+    .map-layout {
+        display: flex;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
     .map-container {
+        flex: 2;
         width: 100%;
         height: 500px;
         border-radius: 1rem;
         box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
         border: 1px solid var(--border);
-        margin: 3rem 0;
         z-index: 10;
         position: relative;
+    }
+    .detail-panel {
+        flex: 1;
+        background: var(--surface);
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        max-height: 500px;
+    }
+    .detail-panel h3 {
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.5rem;
+    }
+    .detail-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(255,255,255, 0.05);
+    }
+    .detail-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-transform: capitalize;
+    }
+    .detail-value {
+        font-weight: 600;
+        color: var(--primary);
     }
     .leaflet-popup-content-wrapper {
         background: var(--surface);
@@ -61,7 +108,15 @@
         </select>
         <button id="gps-button" class="btn btn-primary">📍 Lokasi Saya</button>
     </div>
-    <div id="map" class="map-container"></div>
+    <div class="map-layout">
+        <div id="map" class="map-container"></div>
+        <div id="detail-panel" class="detail-panel">
+            <h3 id="detail-title">Pilih wilayah...</h3>
+            <div id="detail-content" class="detail-list">
+                <p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">Pilih marker pada peta atau dropdown untuk melihat data indikator kemiskinan dan nutrisi.</p>
+            </div>
+        </div>
+    </div>
 </section>
 
 <section class="features-grid">
@@ -99,6 +154,34 @@
             maxZoom: 20
         }).addTo(map);
 
+        // Fungsi Detail Panel
+        function showDetailPanel(region) {
+            const title = document.getElementById('detail-title');
+            const content = document.getElementById('detail-content');
+            
+            title.textContent = "Detail " + (region['kab/kota'] || 'Wilayah');
+            content.innerHTML = '';
+            
+            // Eksklusi kolom yang tidak boleh tampil sesuai issue #14
+            const excludeFields = ['lisa_cluster', 'id', 'created_at', 'updated_at', 'latitude', 'longitude', 'kab/kota'];
+            
+            Object.entries(region).forEach(([key, value]) => {
+                if (!excludeFields.includes(key)) {
+                    // Fallback untuk handling data kosong
+                    const displayValue = (value === null || value === '') ? '-' : value;
+                    const formatKey = key.replace(/_/g, ' ');
+                    
+                    const itemHtml = `
+                        <div class="detail-item">
+                            <span class="detail-label">${formatKey}</span>
+                            <span class="detail-value">${displayValue}</span>
+                        </div>
+                    `;
+                    content.insertAdjacentHTML('beforeend', itemHtml);
+                }
+            });
+        }
+
         // Fetch Regions API
         fetch('/api/regions')
             .then(res => res.json())
@@ -135,9 +218,12 @@
                         .addTo(map)
                         .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b>`);
                         
+                        // Sambungkan kejadian klik Marker ke fungsi sidebar
+                        marker.on('click', () => { showDetailPanel(region); });
+                        
                         // Populate dropdown
                         const option = document.createElement('option');
-                        option.value = JSON.stringify({lat: region.latitude, lng: region.longitude});
+                        option.value = JSON.stringify({...region, lat: region.latitude, lng: region.longitude});
                         option.textContent = region['kab/kota'];
                         dropdown.appendChild(option);
                     });
@@ -145,10 +231,13 @@
                     // Dropdown interaction
                     dropdown.addEventListener('change', function(e) {
                         if(this.value) {
-                            const coords = JSON.parse(this.value);
-                            map.flyTo([coords.lat, coords.lng], 14);
+                            const regionData = JSON.parse(this.value);
+                            map.flyTo([regionData.lat, regionData.lng], 14);
+                            showDetailPanel(regionData);
                         } else {
                             map.setView([-6.21, 106.82], 12); // Reset view
+                            document.getElementById('detail-title').textContent = 'Pilih wilayah...';
+                            document.getElementById('detail-content').innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">Pilih marker pada peta atau dropdown untuk melihat data indikator kemiskinan dan nutrisi.</p>';
                         }
                     });
                 }
