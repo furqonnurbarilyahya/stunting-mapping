@@ -12,6 +12,7 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    @yield('styles')
 </head>
 <body>
     <!-- Navbar -->
@@ -45,5 +46,6 @@
     <footer>
         <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
     </footer>
+    @yield('scripts')
 </body>
 </html>
