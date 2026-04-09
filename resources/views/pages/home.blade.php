@@ -100,16 +100,40 @@
         justify-content: center;
         gap: 1rem;
         margin-bottom: 1rem;
+        flex-wrap: wrap;
     }
-    .select-control {
-        padding: 0.6rem 1rem;
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--surface);
+        padding: 0.5rem 1rem;
         border-radius: 9999px;
         border: 1px solid var(--border);
-        background: var(--surface);
+    }
+    .filter-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    .select-control {
+        padding: 0.3rem 0.5rem;
+        border-radius: 9999px;
+        border: none;
+        background: transparent;
         color: var(--text-primary);
         font-family: inherit;
         outline: none;
         cursor: pointer;
+    }
+    .number-input {
+        width: 60px;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.05);
+        color: var(--text-primary);
+        outline: none;
     }
 </style>
 @endsection
@@ -127,10 +151,32 @@
 <section id="map-section" style="margin-top: 2rem;">
     <h2 style="text-align: center; margin-bottom: 1rem;">Peta Persebaran Stunting</h2>
     <div class="map-controls">
-        <select id="region-dropdown" class="select-control">
-            <option value="">-- Pilih Wilayah --</option>
-        </select>
-        <button id="gps-button" class="btn btn-primary">📍 Lokasi Saya</button>
+        <div class="filter-group">
+            <span class="filter-label">Wilayah:</span>
+            <select id="region-dropdown" class="select-control">
+                <option value="">-- Pilih Wilayah --</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <span class="filter-label">Klaster:</span>
+            <select id="cluster-filter" class="select-control">
+                <option value="all">Semua Klaster</option>
+                <option value="1">High-High (Hotspot)</option>
+                <option value="2">Low-High</option>
+                <option value="3">Low-Low</option>
+                <option value="4">High-Low (ColdSpot)</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-label">Stunting:</span>
+            <input type="number" id="stunting-min" class="number-input" placeholder="Min" step="0.1">
+            <span style="color: var(--border)">-</span>
+            <input type="number" id="stunting-max" class="number-input" placeholder="Max" step="0.1">
+        </div>
+
+        <button id="gps-button" class="btn btn-primary" style="border-radius: 9999px;">📍 Lokasi Saya</button>
     </div>
     <div class="map-layout">
         <div id="map" class="map-container"></div>
@@ -193,6 +239,10 @@
         };
         legend.addTo(map);
 
+        // Marker Management
+        const markerLayer = L.layerGroup().addTo(map);
+        let allRegions = [];
+
         // Fungsi Detail Panel
         function showDetailPanel(region) {
             const title = document.getElementById('detail-title');
@@ -221,44 +271,68 @@
             });
         }
 
+        // Fungsi Filter
+        function applyFilters() {
+            const clusterVal = document.getElementById('cluster-filter').value;
+            const minStunting = parseFloat(document.getElementById('stunting-min').value) || 0;
+            const maxStunting = parseFloat(document.getElementById('stunting-max').value) || Infinity;
+
+            markerLayer.clearLayers();
+
+            allRegions.forEach(region => {
+                const matchesCluster = clusterVal === 'all' || region.lisa_cluster.toString() === clusterVal;
+                const matchesStunting = region.stunting >= minStunting && region.stunting <= maxStunting;
+
+                if (matchesCluster && matchesStunting) {
+                    addMarkerToMap(region);
+                }
+            });
+        }
+
+        function addMarkerToMap(region) {
+            let hexColor = '#94a3b8';
+            let clusterName = 'Tidak Terklasifikasi';
+            
+            if (region.lisa_cluster === 1) {
+                hexColor = '#ef4444';
+                clusterName = 'High-High (Hotspot)';
+            } else if (region.lisa_cluster === 2) {
+                hexColor = '#f59e0b';
+                clusterName = 'Low-High';
+            } else if (region.lisa_cluster === 3) {
+                hexColor = '#10b981';
+                clusterName = 'Low-Low';
+            } else if (region.lisa_cluster === 4) {
+                hexColor = '#3b82f6';
+                clusterName = 'High-Low (ColdSpot)';
+            }
+
+            const marker = L.circleMarker([region.latitude, region.longitude], {
+                radius: 12,
+                color: hexColor,
+                weight: 2,
+                fillColor: hexColor,
+                fillOpacity: 0.6
+            })
+            .addTo(markerLayer)
+            .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b><br>Stunting: <b>${region.stunting}%</b>`);
+            
+            marker.on('click', () => { 
+                showDetailPanel(region); 
+                map.flyTo([region.latitude, region.longitude], 14);
+            });
+        }
+
         // Fetch Regions API
         fetch('/api/regions')
             .then(res => res.json())
             .then(response => {
                 if(response.success && response.data) {
+                    allRegions = response.data;
                     const dropdown = document.getElementById('region-dropdown');
                     
-                    response.data.forEach(region => {
-                        let hexColor = '#94a3b8'; // Gray default
-                        let clusterName = 'Tidak Terklasifikasi';
-                        
-                        if (region.lisa_cluster === 1) {
-                            hexColor = '#ef4444'; // Merah
-                            clusterName = 'High-High (Hotspot)';
-                        } else if (region.lisa_cluster === 2) {
-                            hexColor = '#f59e0b'; // Oranye
-                            clusterName = 'Low-High';
-                        } else if (region.lisa_cluster === 3) {
-                            hexColor = '#10b981'; // Hijau
-                            clusterName = 'Low-Low';
-                        } else if (region.lisa_cluster === 4) {
-                            hexColor = '#3b82f6'; // Biru
-                            clusterName = 'High-Low (ColdSpot)';
-                        }
-
-                        // Create circle marker
-                        const marker = L.circleMarker([region.latitude, region.longitude], {
-                            radius: 12,
-                            color: hexColor,
-                            weight: 2,
-                            fillColor: hexColor,
-                            fillOpacity: 0.6
-                        })
-                        .addTo(map)
-                        .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b>`);
-                        
-                        // Sambungkan kejadian klik Marker ke fungsi sidebar
-                        marker.on('click', () => { showDetailPanel(region); });
+                    allRegions.forEach(region => {
+                        addMarkerToMap(region);
                         
                         // Populate dropdown
                         const option = document.createElement('option');
@@ -266,6 +340,11 @@
                         option.textContent = region['kab/kota'];
                         dropdown.appendChild(option);
                     });
+
+                    // Add Event Listeners for Filters
+                    document.getElementById('cluster-filter').addEventListener('change', applyFilters);
+                    document.getElementById('stunting-min').addEventListener('input', applyFilters);
+                    document.getElementById('stunting-max').addEventListener('input', applyFilters);
 
                     // Dropdown interaction
                     dropdown.addEventListener('change', function(e) {
