@@ -4,201 +4,6 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<style>
-    .map-layout {
-        display: flex;
-        gap: 1.5rem;
-        align-items: stretch;
-    }
-    .map-container {
-        flex: 2;
-        width: 100%;
-        height: 500px;
-        border-radius: 1rem;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-        border: 1px solid var(--border);
-        z-index: 10;
-        position: relative;
-    }
-    .detail-panel {
-        flex: 1;
-        background: var(--surface);
-        border-radius: 1rem;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-        border: 1px solid var(--border);
-        padding: 1.5rem;
-        color: var(--text-primary);
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        max-height: 500px;
-    }
-    .detail-panel h3 {
-        margin-bottom: 1rem;
-        font-size: 1.25rem;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 0.5rem;
-    }
-    .detail-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-    .detail-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: rgba(255, 255, 255, 0.03);
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.5rem;
-        border: 1px solid rgba(255,255,255, 0.05);
-    }
-    .detail-label {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-        text-transform: capitalize;
-    }
-    .detail-value {
-        font-weight: 600;
-        color: var(--primary);
-    }
-    .leaflet-popup-content-wrapper {
-        background: var(--surface);
-        color: var(--text-primary);
-        border: 1px solid var(--border);
-        border-radius: 0.5rem;
-    }
-    .leaflet-popup-tip {
-        background: var(--surface);
-    }
-    .info.legend {
-        background: var(--surface);
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-        color: var(--text-primary);
-        font-size: 0.9rem;
-    }
-    .legend-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 6px;
-    }
-    .legend-item:last-child {
-        margin-bottom: 0;
-    }
-    .legend-color {
-        width: 14px;
-        height: 14px;
-        display: inline-block;
-        border-radius: 50%;
-        margin-right: 8px;
-    }
-    .map-controls {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
-        flex-wrap: wrap;
-    }
-    .filter-group {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: var(--surface);
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        border: 1px solid var(--border);
-    }
-    .filter-label {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-    }
-    .select-control {
-        padding: 0.3rem 0.5rem;
-        border-radius: 9999px;
-        border: none;
-        background: transparent;
-        color: var(--text-primary);
-        font-family: inherit;
-        outline: none;
-        cursor: pointer;
-    }
-    .number-input {
-        width: 60px;
-        padding: 0.2rem 0.5rem;
-        border-radius: 0.5rem;
-        border: 1px solid var(--border);
-        background: rgba(255,255,255,0.05);
-        color: var(--text-primary);
-        outline: none;
-    }
-    .ranking-section {
-        margin-top: 3rem;
-    }
-    .ranking-layout {
-        display: flex;
-        gap: 1.5rem;
-        align-items: stretch;
-    }
-    @media (max-width: 768px) {
-        .ranking-layout {
-            flex-direction: column;
-        }
-    }
-    .ranking-card {
-        flex: 1;
-        background: var(--surface);
-        border-radius: 1rem;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-        border: 1px solid var(--border);
-        padding: 1.5rem;
-    }
-    .ranking-card.danger h3 {
-        color: #ef4444; border-bottom: 1px solid rgba(239, 68, 68, 0.2);
-        padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.25rem;
-    }
-    .ranking-card.success h3 {
-        color: #10b981; border-bottom: 1px solid rgba(16, 185, 129, 0.2);
-        padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.25rem;
-    }
-    .ranking-list {
-        list-style: none; padding: 0; margin: 0;
-        display: flex; flex-direction: column; gap: 0.5rem;
-    }
-    .ranking-item {
-        display: flex; justify-content: space-between; align-items: center;
-        background: rgba(255, 255, 255, 0.03); 
-        padding: 0.75rem 1rem; border-radius: 0.5rem;
-        cursor: pointer; border: 1px solid rgba(255,255,255, 0.05);
-        transition: all 0.2s ease;
-    }
-    .ranking-item:hover {
-        background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255, 0.2);
-        transform: translateY(-2px);
-    }
-    .ranking-name { font-weight: 500; color: var(--text-primary); }
-    .ranking-value { font-weight: 700; color: var(--text-secondary); }
-    .ranking-card.danger .ranking-value { color: #fca5a5; }
-    .ranking-card.success .ranking-value { color: #6ee7b7; }
-    
-    .chart-section {
-        margin-top: 3rem;
-        background: var(--surface);
-        border-radius: 1rem;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-        border: 1px solid var(--border);
-        padding: 1.5rem;
-    }
-    .chart-container {
-        position: relative;
-        height: 400px;
-        width: 100%;
-        margin-top: 1.5rem;
-    }
-</style>
 @endsection
 
 @section('content')
@@ -206,47 +11,45 @@
     <h1 class="hero-title">Sistem Pemetaan<br>Klaster Stunting</h1>
     <p class="hero-subtitle">Membantu mengelola, menganalisis, dan memvisualisasikan data wilayah stunting untuk pengambilan keputusan yang lebih akurat.</p>
     <div>
-        <a href="#map" class="btn btn-primary">Mulai Eksplorasi</a>
+        <a href="#map-section" class="btn btn-primary">Mulai Eksplorasi</a>
     </div>
 </section>
 
 <!-- Map Section -->
-<section id="map-section" style="margin-top: 2rem;">
-    <h2 style="text-align: center; margin-bottom: 1rem;">Peta Persebaran Stunting</h2>
+<section id="map-section" class="map-section">
+    <h2 class="section-title">Peta Persebaran Stunting</h2>
     <div class="map-controls">
         <div class="filter-group">
-            <span class="filter-label">Wilayah:</span>
-            <select id="region-dropdown" class="select-control">
-                <option value="">-- Pilih Wilayah --</option>
-            </select>
+            <span class="filter-label">Cari:</span>
+            <input type="text" id="region-search" class="select-control" list="region-datalist" placeholder="Ketik Kab/Kota..." autocomplete="off">
+            <datalist id="region-datalist"></datalist>
         </div>
         
         <div class="filter-group">
             <span class="filter-label">Klaster:</span>
             <select id="cluster-filter" class="select-control">
                 <option value="all">Semua Klaster</option>
-                <option value="1">High-High (Hotspot)</option>
-                <option value="2">Low-High</option>
-                <option value="3">Low-Low</option>
-                <option value="4">High-Low (ColdSpot)</option>
+                <option value="1">Hotspot (High-High)</option>
+                <option value="outlier">Spatial Outlier (Low-High / High-Low)</option>
+                <option value="3">Coldspot (Low-Low)</option>
             </select>
         </div>
 
         <div class="filter-group">
             <span class="filter-label">Stunting:</span>
             <input type="number" id="stunting-min" class="number-input" placeholder="Min" step="0.1">
-            <span style="color: var(--border)">-</span>
+            <span class="filter-separator">-</span>
             <input type="number" id="stunting-max" class="number-input" placeholder="Max" step="0.1">
         </div>
 
-        <button id="gps-button" class="btn btn-primary" style="border-radius: 9999px;">📍 Lokasi Saya</button>
+        <button id="gps-button" class="btn btn-primary">📍 Lokasi Saya</button>
     </div>
     <div class="map-layout">
         <div id="map" class="map-container"></div>
         <div id="detail-panel" class="detail-panel">
             <h3 id="detail-title">Pilih wilayah...</h3>
             <div id="detail-content" class="detail-list">
-                <p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">Pilih marker pada peta atau dropdown untuk melihat data indikator kemiskinan dan nutrisi.</p>
+                <p class="detail-placeholder">Pilih marker pada peta atau ketik di kotak pencarian untuk melihat data indikator kemiskinan dan nutrisi.</p>
             </div>
         </div>
     </div>
@@ -254,18 +57,19 @@
 
 <!-- Ranking Section -->
 <section class="ranking-section" id="ranking-section">
-    <h2 style="text-align: center; margin-bottom: 2rem;">Klasemen Prioritas Intervensi Stunting</h2>
+    <h1 class="section-title">Data Statistik</h1>
+    <h2 class="section-subtitle">Prioritas Intervensi Stunting</h2>
     <div class="ranking-layout">
         <div class="ranking-card danger">
             <h3>🔴 Top 5 Kasus Tertinggi (Prioritas)</h3>
             <ul id="highest-ranking-list" class="ranking-list">
-                <li style="text-align: center; padding: 1rem; color: var(--text-secondary);">Memuat data...</li>
+                <li class="ranking-loading">Memuat data...</li>
             </ul>
         </div>
         <div class="ranking-card success">
             <h3>🟢 Top 5 Pencapaian Terbaik (Terendah)</h3>
             <ul id="lowest-ranking-list" class="ranking-list">
-                <li style="text-align: center; padding: 1rem; color: var(--text-secondary);">Memuat data...</li>
+                <li class="ranking-loading">Memuat data...</li>
             </ul>
         </div>
     </div>
@@ -273,7 +77,7 @@
 
 <!-- Chart Section -->
 <section class="chart-section" id="chart-section">
-    <h2 style="text-align: center;">Visualisasi Statistik Stunting per Wilayah</h2>
+    <h2 class="section-title">Visualisasi Statistik Stunting per Wilayah</h2>
     <div class="chart-container">
         <canvas id="stuntingChart"></canvas>
     </div>
@@ -305,8 +109,24 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Init map roughly centered on the dummy data
-        const map = L.map('map').setView([-6.21, 106.82], 12);
+        // Init map centered on East Java (Shifted East to see more regions)
+        const map = L.map('map', {
+            zoomControl: true,
+            scrollWheelZoom: true
+        }).setView([-7.6000, 112.9000], 8);
+
+        // Add initial class to hide tooltips at zoom 8
+        document.getElementById('map').classList.add('hide-tooltips');
+
+        // Zoom event to toggle tooltip visibility
+        map.on('zoomend', function() {
+            const zoom = map.getZoom();
+            if (zoom > 8) {
+                document.getElementById('map').classList.remove('hide-tooltips');
+            } else {
+                document.getElementById('map').classList.add('hide-tooltips');
+            }
+        });
 
         // Dark Theme Tile Layer
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -316,15 +136,14 @@
         }).addTo(map);
 
         // Menambahkan panel Legenda Peta (Legend Control)
-        const legend = L.control({position: 'bottomright'});
+        const legend = L.control({position: 'bottomleft'});
         legend.onAdd = function (map) {
             const div = L.DomUtil.create('div', 'info legend');
             div.innerHTML = `
-                <h4 style="margin: 0 0 10px 0; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Legenda Klaster</h4>
-                <div class="legend-item"><span class="legend-color" style="background: #ef4444"></span> High-High (Hotspot)</div>
-                <div class="legend-item"><span class="legend-color" style="background: #f59e0b"></span> Low-High</div>
-                <div class="legend-item"><span class="legend-color" style="background: #10b981"></span> Low-Low</div>
-                <div class="legend-item"><span class="legend-color" style="background: #3b82f6"></span> High-Low (ColdSpot)</div>
+                <h4 class="legend-title">Legenda Klaster</h4>
+                <div class="legend-item"><span class="legend-color" style="background: #ef4444"></span> Hotspot (High-High)</div>
+                <div class="legend-item"><span class="legend-color" style="background: #c2c2c2"></span> Spatial Outlier</div>
+                <div class="legend-item"><span class="legend-color" style="background: #10b981"></span> Coldspot (Low-Low)</div>
             `;
             return div;
         };
@@ -372,7 +191,14 @@
             const filteredRegions = [];
 
             allRegions.forEach(region => {
-                const matchesCluster = clusterVal === 'all' || region.lisa_cluster.toString() === clusterVal;
+                let matchesCluster = false;
+                if (clusterVal === 'all') {
+                    matchesCluster = true;
+                } else if (clusterVal === 'outlier') {
+                    matchesCluster = (region.lisa_cluster === 2 || region.lisa_cluster === 4);
+                } else {
+                    matchesCluster = region.lisa_cluster.toString() === clusterVal;
+                }
                 const matchesStunting = region.stunting >= minStunting && region.stunting <= maxStunting;
 
                 if (matchesCluster && matchesStunting) {
@@ -442,16 +268,13 @@
             
             if (region.lisa_cluster === 1) {
                 hexColor = '#ef4444';
-                clusterName = 'High-High (Hotspot)';
-            } else if (region.lisa_cluster === 2) {
-                hexColor = '#f59e0b';
-                clusterName = 'Low-High';
+                clusterName = 'Hotspot (High-High)';
+            } else if (region.lisa_cluster === 2 || region.lisa_cluster === 4) {
+                hexColor = '#c2c2c2';
+                clusterName = 'Spatial Outlier';
             } else if (region.lisa_cluster === 3) {
                 hexColor = '#10b981';
-                clusterName = 'Low-Low';
-            } else if (region.lisa_cluster === 4) {
-                hexColor = '#3b82f6';
-                clusterName = 'High-Low (ColdSpot)';
+                clusterName = 'Coldspot (Low-Low)';
             }
 
             const marker = L.circleMarker([region.latitude, region.longitude], {
@@ -462,7 +285,13 @@
                 fillOpacity: 0.6
             })
             .addTo(markerLayer)
-            .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b><br>Stunting: <b>${region.stunting}%</b>`);
+            .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b><br>Stunting: <b>${region.stunting}%</b>`)
+            .bindTooltip(region['kab/kota'], { 
+                permanent: true, 
+                direction: 'top', 
+                className: 'region-tooltip',
+                offset: [0, -10]
+            });
             
             marker.on('click', () => { 
                 showDetailPanel(region); 
@@ -476,14 +305,13 @@
             .then(response => {
                 if(response.success && response.data) {
                     allRegions = response.data;
-                    const dropdown = document.getElementById('region-dropdown');
+                    const datalist = document.getElementById('region-datalist');
                     
                     allRegions.forEach(region => {
-                        // Populate dropdown
+                        // Populate datalist search
                         const option = document.createElement('option');
-                        option.value = JSON.stringify({...region, lat: region.latitude, lng: region.longitude});
-                        option.textContent = region['kab/kota'];
-                        dropdown.appendChild(option);
+                        option.value = region['kab/kota'];
+                        datalist.appendChild(option);
                     });
 
                     // Add Event Listeners for Filters
@@ -532,16 +360,19 @@
                     
                     renderRanking(); // Panggil saat pemuatan data usai
 
-                    // Dropdown interaction
-                    dropdown.addEventListener('change', function(e) {
-                        if(this.value) {
-                            const regionData = JSON.parse(this.value);
-                            map.flyTo([regionData.lat, regionData.lng], 14);
-                            showDetailPanel(regionData);
-                        } else {
-                            map.setView([-6.21, 106.82], 12); // Reset view
+                    // Search Box interaction
+                    const searchInput = document.getElementById('region-search');
+                    searchInput.addEventListener('change', function(e) {
+                        const searchedName = this.value;
+                        const match = allRegions.find(r => r['kab/kota'] === searchedName);
+                        
+                        if(match) {
+                            map.flyTo([match.latitude, match.longitude], 14);
+                            showDetailPanel(match);
+                        } else if(searchedName.trim() === '') {
+                            map.setView([-7.6000, 112.9000], 8); // Reset view to East Java
                             document.getElementById('detail-title').textContent = 'Pilih wilayah...';
-                            document.getElementById('detail-content').innerHTML = '<p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">Pilih marker pada peta atau dropdown untuk melihat data indikator kemiskinan dan nutrisi.</p>';
+                            document.getElementById('detail-content').innerHTML = '<p class="detail-placeholder">Pilih marker pada peta atau ketik di kotak pencarian untuk melihat data indikator kemiskinan dan nutrisi.</p>';
                         }
                     });
                 }
