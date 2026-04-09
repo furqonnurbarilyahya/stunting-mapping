@@ -71,6 +71,30 @@
     .leaflet-popup-tip {
         background: var(--surface);
     }
+    .info.legend {
+        background: var(--surface);
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+    .legend-item:last-child {
+        margin-bottom: 0;
+    }
+    .legend-color {
+        width: 14px;
+        height: 14px;
+        display: inline-block;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
     .map-controls {
         display: flex;
         justify-content: center;
@@ -154,6 +178,21 @@
             maxZoom: 20
         }).addTo(map);
 
+        // Menambahkan panel Legenda Peta (Legend Control)
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML = `
+                <h4 style="margin: 0 0 10px 0; font-size: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 5px;">Legenda Klaster</h4>
+                <div class="legend-item"><span class="legend-color" style="background: #ef4444"></span> High-High (Hotspot)</div>
+                <div class="legend-item"><span class="legend-color" style="background: #f59e0b"></span> Low-High</div>
+                <div class="legend-item"><span class="legend-color" style="background: #10b981"></span> Low-Low</div>
+                <div class="legend-item"><span class="legend-color" style="background: #3b82f6"></span> High-Low (ColdSpot)</div>
+            `;
+            return div;
+        };
+        legend.addTo(map);
+
         // Fungsi Detail Panel
         function showDetailPanel(region) {
             const title = document.getElementById('detail-title');
@@ -195,16 +234,16 @@
                         
                         if (region.lisa_cluster === 1) {
                             hexColor = '#ef4444'; // Merah
-                            clusterName = 'Hot Spot';
+                            clusterName = 'High-High (Hotspot)';
                         } else if (region.lisa_cluster === 2) {
-                            hexColor = '#f59e0b'; // Kuning (Amber)
-                            clusterName = 'Waspada (Outlier)';
+                            hexColor = '#f59e0b'; // Oranye
+                            clusterName = 'Low-High';
                         } else if (region.lisa_cluster === 3) {
                             hexColor = '#10b981'; // Hijau
-                            clusterName = 'Cold Spot';
+                            clusterName = 'Low-Low';
                         } else if (region.lisa_cluster === 4) {
-                            hexColor = '#ef4444'; // Merah
-                            clusterName = 'Sangat Rawan (Outlier)';
+                            hexColor = '#3b82f6'; // Biru
+                            clusterName = 'High-Low (ColdSpot)';
                         }
 
                         // Create circle marker
