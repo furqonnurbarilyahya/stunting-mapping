@@ -107,16 +107,25 @@
                     const dropdown = document.getElementById('region-dropdown');
                     
                     response.data.forEach(region => {
-                        let hexColor = '#10b981'; // Green for Rendah
+                        let hexColor = '#94a3b8'; // Gray default
+                        let clusterName = 'Tidak Terklasifikasi';
                         
-                        if(region.cluster.toLowerCase() === 'tinggi') {
-                            hexColor = '#ef4444'; // Red
-                        } else if(region.cluster.toLowerCase() === 'sedang') {
-                            hexColor = '#f59e0b'; // Orange
+                        if (region.lisa_cluster === 1) {
+                            hexColor = '#ef4444'; // Merah
+                            clusterName = 'Hot Spot';
+                        } else if (region.lisa_cluster === 2) {
+                            hexColor = '#f59e0b'; // Kuning (Amber)
+                            clusterName = 'Waspada (Outlier)';
+                        } else if (region.lisa_cluster === 3) {
+                            hexColor = '#10b981'; // Hijau
+                            clusterName = 'Cold Spot';
+                        } else if (region.lisa_cluster === 4) {
+                            hexColor = '#ef4444'; // Merah
+                            clusterName = 'Sangat Rawan (Outlier)';
                         }
 
                         // Create circle marker
-                        L.circleMarker([region.latitude, region.longitude], {
+                        const marker = L.circleMarker([region.latitude, region.longitude], {
                             radius: 12,
                             color: hexColor,
                             weight: 2,
@@ -124,12 +133,12 @@
                             fillOpacity: 0.6
                         })
                         .addTo(map)
-                        .bindPopup(`<b>${region.name}</b><br>Klaster: <b>${region.cluster}</b>`);
+                        .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b>`);
                         
                         // Populate dropdown
                         const option = document.createElement('option');
                         option.value = JSON.stringify({lat: region.latitude, lng: region.longitude});
-                        option.textContent = region.name;
+                        option.textContent = region['kab/kota'];
                         dropdown.appendChild(option);
                     });
 

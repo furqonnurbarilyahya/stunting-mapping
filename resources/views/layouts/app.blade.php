@@ -27,7 +27,7 @@
             
             <div class="navbar-menu">
                 <a href="{{ route('home') }}" class="nav-link">Home</a>
-                <a href="#" class="nav-link">Data Wilayah</a>
+                <a href="{{ url('/import') }}" class="nav-link">Import Data</a>
                 <a href="#" class="nav-link">Statistik</a>
             </div>
             
