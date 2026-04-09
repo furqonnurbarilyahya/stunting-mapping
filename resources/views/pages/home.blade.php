@@ -135,6 +135,54 @@
         color: var(--text-primary);
         outline: none;
     }
+    .ranking-section {
+        margin-top: 3rem;
+    }
+    .ranking-layout {
+        display: flex;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+    @media (max-width: 768px) {
+        .ranking-layout {
+            flex-direction: column;
+        }
+    }
+    .ranking-card {
+        flex: 1;
+        background: var(--surface);
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+    }
+    .ranking-card.danger h3 {
+        color: #ef4444; border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+        padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.25rem;
+    }
+    .ranking-card.success h3 {
+        color: #10b981; border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+        padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.25rem;
+    }
+    .ranking-list {
+        list-style: none; padding: 0; margin: 0;
+        display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .ranking-item {
+        display: flex; justify-content: space-between; align-items: center;
+        background: rgba(255, 255, 255, 0.03); 
+        padding: 0.75rem 1rem; border-radius: 0.5rem;
+        cursor: pointer; border: 1px solid rgba(255,255,255, 0.05);
+        transition: all 0.2s ease;
+    }
+    .ranking-item:hover {
+        background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255, 0.2);
+        transform: translateY(-2px);
+    }
+    .ranking-name { font-weight: 500; color: var(--text-primary); }
+    .ranking-value { font-weight: 700; color: var(--text-secondary); }
+    .ranking-card.danger .ranking-value { color: #fca5a5; }
+    .ranking-card.success .ranking-value { color: #6ee7b7; }
 </style>
 @endsection
 
@@ -185,6 +233,25 @@
             <div id="detail-content" class="detail-list">
                 <p style="color: var(--text-secondary); text-align: center; margin-top: 2rem;">Pilih marker pada peta atau dropdown untuk melihat data indikator kemiskinan dan nutrisi.</p>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- Ranking Section -->
+<section class="ranking-section" id="ranking-section">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Klasemen Prioritas Intervensi Stunting</h2>
+    <div class="ranking-layout">
+        <div class="ranking-card danger">
+            <h3>🔴 Top 5 Kasus Tertinggi (Prioritas)</h3>
+            <ul id="highest-ranking-list" class="ranking-list">
+                <li style="text-align: center; padding: 1rem; color: var(--text-secondary);">Memuat data...</li>
+            </ul>
+        </div>
+        <div class="ranking-card success">
+            <h3>🟢 Top 5 Pencapaian Terbaik (Terendah)</h3>
+            <ul id="lowest-ranking-list" class="ranking-list">
+                <li style="text-align: center; padding: 1rem; color: var(--text-secondary);">Memuat data...</li>
+            </ul>
         </div>
     </div>
 </section>
@@ -345,6 +412,44 @@
                     document.getElementById('cluster-filter').addEventListener('change', applyFilters);
                     document.getElementById('stunting-min').addEventListener('input', applyFilters);
                     document.getElementById('stunting-max').addEventListener('input', applyFilters);
+
+                    // Fungsi membangun Ranking UI
+                    function renderRanking() {
+                        const listHigh = document.getElementById('highest-ranking-list');
+                        const listLow = document.getElementById('lowest-ranking-list');
+                        
+                        listHigh.innerHTML = '';
+                        listLow.innerHTML = '';
+                        
+                        // Menghindari mutasi array asli
+                        const sortedByStunting = [...allRegions].sort((a, b) => b.stunting - a.stunting);
+                        
+                        // Top 5 Tertinggi
+                        const topHighest = sortedByStunting.slice(0, 5);
+                        // Top 5 Terendah
+                        const topLowest = [...sortedByStunting].reverse().slice(0, 5);
+                        
+                        const buildItemHTML = (region) => {
+                            const li = document.createElement('li');
+                            li.className = 'ranking-item';
+                            li.innerHTML = `<span class="ranking-name">${region['kab/kota']}</span><span class="ranking-value">${region.stunting}%</span>`;
+                            li.addEventListener('click', () => {
+                                // Scroll lembut ke layer peta
+                                document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
+                                // Panggil efek interaktif terbang ke Peta dan tampilkan panel
+                                setTimeout(() => {
+                                    map.flyTo([region.latitude, region.longitude], 14);
+                                    showDetailPanel(region);
+                                }, 300);
+                            });
+                            return li;
+                        };
+                        
+                        topHighest.forEach(r => listHigh.appendChild(buildItemHTML(r)));
+                        topLowest.forEach(r => listLow.appendChild(buildItemHTML(r)));
+                    }
+                    
+                    renderRanking(); // Panggil saat pemuatan data usai
 
                     // Dropdown interaction
                     dropdown.addEventListener('change', function(e) {
