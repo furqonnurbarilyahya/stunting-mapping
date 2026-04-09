@@ -183,6 +183,21 @@
     .ranking-value { font-weight: 700; color: var(--text-secondary); }
     .ranking-card.danger .ranking-value { color: #fca5a5; }
     .ranking-card.success .ranking-value { color: #6ee7b7; }
+    
+    .chart-section {
+        margin-top: 3rem;
+        background: var(--surface);
+        border-radius: 1rem;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+        margin-top: 1.5rem;
+    }
 </style>
 @endsection
 
@@ -256,6 +271,14 @@
     </div>
 </section>
 
+<!-- Chart Section -->
+<section class="chart-section" id="chart-section">
+    <h2 style="text-align: center;">Visualisasi Statistik Stunting per Wilayah</h2>
+    <div class="chart-container">
+        <canvas id="stuntingChart"></canvas>
+    </div>
+</section>
+
 <section class="features-grid">
     <div class="feature-card">
         <div class="feature-icon">📊</div>
@@ -279,6 +302,7 @@
 
 @section('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Init map roughly centered on the dummy data
@@ -338,13 +362,14 @@
             });
         }
 
-        // Fungsi Filter
+        // Fungsi Filter Dinamis (Map & Chart)
         function applyFilters() {
             const clusterVal = document.getElementById('cluster-filter').value;
             const minStunting = parseFloat(document.getElementById('stunting-min').value) || 0;
             const maxStunting = parseFloat(document.getElementById('stunting-max').value) || Infinity;
 
             markerLayer.clearLayers();
+            const filteredRegions = [];
 
             allRegions.forEach(region => {
                 const matchesCluster = clusterVal === 'all' || region.lisa_cluster.toString() === clusterVal;
@@ -352,6 +377,61 @@
 
                 if (matchesCluster && matchesStunting) {
                     addMarkerToMap(region);
+                    filteredRegions.push(region);
+                }
+            });
+            
+            updateChart(filteredRegions);
+        }
+
+        let stuntingChart = null;
+
+        function updateChart(data) {
+            const ctx = document.getElementById('stuntingChart');
+            if(!ctx) return;
+            
+            if (stuntingChart) {
+                stuntingChart.destroy();
+            }
+
+            // Urutkan nilai persentase agar rapi (tinggi ke rendah)
+            const sortedData = [...data].sort((a, b) => b.stunting - a.stunting);
+            
+            const labels = sortedData.map(r => r['kab/kota']);
+            const values = sortedData.map(r => r.stunting);
+            
+            // Merah bila gawat kritis (> 20%), Biru jika rendah
+            const bgColors = sortedData.map(r => r.stunting >= 20 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(59, 130, 246, 0.7)');
+
+            stuntingChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Persentase Stunting (%)',
+                        data: values,
+                        backgroundColor: bgColors,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255,255,255,0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: 'rgba(255,255,255,0.6)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgba(255,255,255,0.6)' }
+                        }
+                    }
                 }
             });
         }
@@ -399,8 +479,6 @@
                     const dropdown = document.getElementById('region-dropdown');
                     
                     allRegions.forEach(region => {
-                        addMarkerToMap(region);
-                        
                         // Populate dropdown
                         const option = document.createElement('option');
                         option.value = JSON.stringify({...region, lat: region.latitude, lng: region.longitude});
@@ -412,6 +490,9 @@
                     document.getElementById('cluster-filter').addEventListener('change', applyFilters);
                     document.getElementById('stunting-min').addEventListener('input', applyFilters);
                     document.getElementById('stunting-max').addEventListener('input', applyFilters);
+
+                    // Initialize first render (peta & chart)
+                    applyFilters();
 
                     // Fungsi membangun Ranking UI
                     function renderRanking() {
