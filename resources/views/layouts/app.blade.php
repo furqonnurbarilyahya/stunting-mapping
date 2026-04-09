@@ -19,23 +19,25 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="{{ route('home') }}" class="navbar-brand">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #38bdf8;">
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
                 <span>Stunting Mapping</span>
             </a>
             
-            <div class="navbar-menu">
+            <button class="navbar-toggle" id="navbar-toggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <div class="navbar-menu" id="navbar-menu">
                 <a href="{{ route('home') }}" class="nav-link">Home</a>
+                <a href="#ranking-section" class="nav-link">Statistik</a>
                 <a href="{{ url('/import') }}" class="nav-link">Import Data</a>
-                <a href="#" class="nav-link">Statistik</a>
-            </div>
-            
-            <div class="navbar-auth">
-                <a href="#" class="btn btn-primary">Login</a>
             </div>
         </div>
     </nav>
+
+    <!-- Mobile overlay (outside navbar-container so it can cover full screen) -->
+    <div class="navbar-overlay" id="navbar-overlay"></div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -47,5 +49,31 @@
         <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
     </footer>
     @yield('scripts')
+
+    <!-- Mobile Menu Toggle -->
+    <script>
+    (function() {
+        const toggle = document.getElementById('navbar-toggle');
+        const menu = document.getElementById('navbar-menu');
+        const overlay = document.getElementById('navbar-overlay');
+
+        function closeMenu() {
+            menu.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+
+        toggle.addEventListener('click', function() {
+            menu.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', closeMenu);
+
+        // Close menu when a nav link is clicked
+        menu.querySelectorAll('.nav-link').forEach(function(link) {
+            link.addEventListener('click', closeMenu);
+        });
+    })();
+    </script>
 </body>
 </html>
