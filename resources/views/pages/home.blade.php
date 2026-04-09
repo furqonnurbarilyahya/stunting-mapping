@@ -24,6 +24,22 @@
     .leaflet-popup-tip {
         background: var(--surface);
     }
+    .map-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    .select-control {
+        padding: 0.6rem 1rem;
+        border-radius: 9999px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-primary);
+        font-family: inherit;
+        outline: none;
+        cursor: pointer;
+    }
 </style>
 @endsection
 
@@ -39,6 +55,12 @@
 <!-- Map Section -->
 <section id="map-section" style="margin-top: 2rem;">
     <h2 style="text-align: center; margin-bottom: 1rem;">Peta Persebaran Stunting</h2>
+    <div class="map-controls">
+        <select id="region-dropdown" class="select-control">
+            <option value="">-- Pilih Wilayah --</option>
+        </select>
+        <button id="gps-button" class="btn btn-primary">📍 Lokasi Saya</button>
+    </div>
     <div id="map" class="map-container"></div>
 </section>
 
@@ -82,6 +104,8 @@
             .then(res => res.json())
             .then(response => {
                 if(response.success && response.data) {
+                    const dropdown = document.getElementById('region-dropdown');
+                    
                     response.data.forEach(region => {
                         let hexColor = '#10b981'; // Green for Rendah
                         
@@ -101,10 +125,65 @@
                         })
                         .addTo(map)
                         .bindPopup(`<b>${region.name}</b><br>Klaster: <b>${region.cluster}</b>`);
+                        
+                        // Populate dropdown
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify({lat: region.latitude, lng: region.longitude});
+                        option.textContent = region.name;
+                        dropdown.appendChild(option);
+                    });
+
+                    // Dropdown interaction
+                    dropdown.addEventListener('change', function(e) {
+                        if(this.value) {
+                            const coords = JSON.parse(this.value);
+                            map.flyTo([coords.lat, coords.lng], 14);
+                        } else {
+                            map.setView([-6.21, 106.82], 12); // Reset view
+                        }
                     });
                 }
             })
             .catch(err => console.error('Error fetching regions:', err));
+
+        // Map click interaction
+        let clickMarker = null;
+        map.on('click', function(e) {
+            if(clickMarker) map.removeLayer(clickMarker);
+            clickMarker = L.marker(e.latlng).addTo(map)
+                .bindPopup("Koordinat dipilih:<br>" + e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5))
+                .openPopup();
+        });
+
+        // GPS Location functionality
+        document.getElementById('gps-button').addEventListener('click', function() {
+            const btn = this;
+            if ("geolocation" in navigator) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "⏳ Melacak...";
+                btn.disabled = true;
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.flyTo([lat, lng], 14);
+                    
+                    if(clickMarker) map.removeLayer(clickMarker);
+                    clickMarker = L.marker([lat, lng]).addTo(map)
+                        .bindPopup("Lokasi Anda Saat Ini")
+                        .openPopup();
+                        
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, function(error) {
+                    alert('Gagal mendapatkan lokasi. Pastikan izin GPS diberikan.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+            } else {
+                alert("Browser Anda tidak mendukung Geolocation.");
+            }
+        });
     });
 </script>
 @endsection
