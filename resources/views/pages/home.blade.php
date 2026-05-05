@@ -149,9 +149,10 @@
         };
         legend.addTo(map);
 
-        // Marker Management
-        const markerLayer = L.layerGroup().addTo(map);
+        // GeoJSON & Data Management
         let allRegions = [];
+        let geoJsonData = null;
+        let geoJsonLayer = null;
 
         // Fungsi Detail Panel
         function showDetailPanel(region) {
@@ -187,7 +188,6 @@
             const minStunting = parseFloat(document.getElementById('stunting-min').value) || 0;
             const maxStunting = parseFloat(document.getElementById('stunting-max').value) || Infinity;
 
-            markerLayer.clearLayers();
             const filteredRegions = [];
 
             allRegions.forEach(region => {
@@ -202,12 +202,12 @@
                 const matchesStunting = region.stunting >= minStunting && region.stunting <= maxStunting;
 
                 if (matchesCluster && matchesStunting) {
-                    addMarkerToMap(region);
                     filteredRegions.push(region);
                 }
             });
             
             updateChart(filteredRegions);
+            renderGeoJson(filteredRegions);
         }
 
         let stuntingChart = null;
@@ -262,122 +262,175 @@
             });
         }
 
-        function addMarkerToMap(region) {
-            let hexColor = '#94a3b8';
-            let clusterName = 'Tidak Terklasifikasi';
-            
-            if (region.lisa_cluster === 1) {
-                hexColor = '#ef4444';
-                clusterName = 'Hotspot (High-High)';
-            } else if (region.lisa_cluster === 2 || region.lisa_cluster === 4) {
-                hexColor = '#c2c2c2';
-                clusterName = 'Spatial Outlier';
-            } else if (region.lisa_cluster === 3) {
-                hexColor = '#10b981';
-                clusterName = 'Coldspot (Low-Low)';
+        function renderGeoJson(filteredRegions) {
+            if (geoJsonLayer) {
+                map.removeLayer(geoJsonLayer);
             }
 
-            const marker = L.circleMarker([region.latitude, region.longitude], {
-                radius: 12,
-                color: hexColor,
-                weight: 2,
-                fillColor: hexColor,
-                fillOpacity: 0.6
-            })
-            .addTo(markerLayer)
-            .bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b><br>Stunting: <b>${region.stunting}%</b>`)
-            .bindTooltip(region['kab/kota'], { 
-                permanent: true, 
-                direction: 'top', 
-                className: 'region-tooltip',
-                offset: [0, -10]
-            });
-            
-            marker.on('click', () => { 
-                showDetailPanel(region); 
-                map.flyTo([region.latitude, region.longitude], 14);
-            });
+            if (!geoJsonData) return;
+
+            geoJsonLayer = L.geoJSON(geoJsonData, {
+                style: function(feature) {
+                    const regionName = feature.properties.WADMKK;
+                    const region = filteredRegions.find(r => r['kab/kota'].toLowerCase() === regionName.toLowerCase());
+
+                    let hexColor = 'transparent';
+                    let fillOpacity = 0;
+                    let weight = 1;
+                    let color = '#444'; // Subtle border for non-matching regions
+
+                    if (region) {
+                        fillOpacity = 0.7;
+                        weight = 2;
+                        color = '#ffffff'; // Tegas batas (stroke) untuk mencegah bleeding warna
+                        
+                        if (region.lisa_cluster === 1) {
+                            hexColor = '#ef4444'; // Hotspot
+                        } else if (region.lisa_cluster === 2 || region.lisa_cluster === 4) {
+                            hexColor = '#c2c2c2'; // Spatial Outlier
+                        } else if (region.lisa_cluster === 3) {
+                            hexColor = '#10b981'; // Coldspot
+                        } else {
+                            hexColor = '#94a3b8'; // Tidak terklasifikasi
+                        }
+                    }
+
+                    return {
+                        fillColor: hexColor,
+                        weight: weight,
+                        opacity: 1,
+                        color: color,
+                        fillOpacity: fillOpacity
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const regionName = feature.properties.WADMKK;
+                    const region = allRegions.find(r => r['kab/kota'].toLowerCase() === regionName.toLowerCase());
+
+                    // Label nama kota permanen
+                    layer.bindTooltip(regionName, { 
+                        permanent: true, 
+                        direction: 'center', 
+                        className: 'region-tooltip'
+                    });
+
+                    if (region) {
+                        let clusterName = 'Tidak Terklasifikasi';
+                        if (region.lisa_cluster === 1) clusterName = 'Hotspot (High-High)';
+                        else if (region.lisa_cluster === 2 || region.lisa_cluster === 4) clusterName = 'Spatial Outlier';
+                        else if (region.lisa_cluster === 3) clusterName = 'Coldspot (Low-Low)';
+
+                        layer.bindPopup(`<b>${region['kab/kota']}</b><br>Klaster: <b>${clusterName}</b><br>Stunting: <b>${region.stunting}%</b>`);
+
+                        layer.on({
+                            click: function(e) {
+                                showDetailPanel(region);
+                                map.fitBounds(e.target.getBounds());
+                            },
+                            mouseover: function(e) {
+                                const l = e.target;
+                                l.setStyle({
+                                    weight: 3,
+                                    color: '#f8fafc',
+                                    fillOpacity: 0.9
+                                });
+                                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                                    l.bringToFront();
+                                }
+                            },
+                            mouseout: function(e) {
+                                geoJsonLayer.resetStyle(e.target);
+                            }
+                        });
+                    }
+                }
+            }).addTo(map);
         }
 
-        // Fetch Regions API
-        fetch('/api/regions')
-            .then(res => res.json())
-            .then(response => {
-                if(response.success && response.data) {
-                    allRegions = response.data;
-                    const datalist = document.getElementById('region-datalist');
+        // Fetch Regions API & GeoJSON Data
+        Promise.all([
+            fetch('/api/regions').then(res => res.json()),
+            fetch('{{ asset("geojson/kab_kota_jatim.geojson") }}').then(res => res.json())
+        ])
+        .then(([apiResponse, geojson]) => {
+            if(apiResponse.success && apiResponse.data) {
+                allRegions = apiResponse.data;
+                geoJsonData = geojson;
+                
+                const datalist = document.getElementById('region-datalist');
+                
+                allRegions.forEach(region => {
+                    // Populate datalist search
+                    const option = document.createElement('option');
+                    option.value = region['kab/kota'];
+                    datalist.appendChild(option);
+                });
+
+                // Add Event Listeners for Filters
+                document.getElementById('cluster-filter').addEventListener('change', applyFilters);
+                document.getElementById('stunting-min').addEventListener('input', applyFilters);
+                document.getElementById('stunting-max').addEventListener('input', applyFilters);
+
+                // Initialize first render (peta & chart)
+                applyFilters();
+
+                // Fungsi membangun Ranking UI
+                function renderRanking() {
+                    const listHigh = document.getElementById('highest-ranking-list');
+                    const listLow = document.getElementById('lowest-ranking-list');
                     
-                    allRegions.forEach(region => {
-                        // Populate datalist search
-                        const option = document.createElement('option');
-                        option.value = region['kab/kota'];
-                        datalist.appendChild(option);
-                    });
-
-                    // Add Event Listeners for Filters
-                    document.getElementById('cluster-filter').addEventListener('change', applyFilters);
-                    document.getElementById('stunting-min').addEventListener('input', applyFilters);
-                    document.getElementById('stunting-max').addEventListener('input', applyFilters);
-
-                    // Initialize first render (peta & chart)
-                    applyFilters();
-
-                    // Fungsi membangun Ranking UI
-                    function renderRanking() {
-                        const listHigh = document.getElementById('highest-ranking-list');
-                        const listLow = document.getElementById('lowest-ranking-list');
-                        
-                        listHigh.innerHTML = '';
-                        listLow.innerHTML = '';
-                        
-                        // Menghindari mutasi array asli
-                        const sortedByStunting = [...allRegions].sort((a, b) => b.stunting - a.stunting);
-                        
-                        // Top 5 Tertinggi
-                        const topHighest = sortedByStunting.slice(0, 5);
-                        // Top 5 Terendah
-                        const topLowest = [...sortedByStunting].reverse().slice(0, 5);
-                        
-                        const buildItemHTML = (region) => {
-                            const li = document.createElement('li');
-                            li.className = 'ranking-item';
-                            li.innerHTML = `<span class="ranking-name">${region['kab/kota']}</span><span class="ranking-value">${region.stunting}%</span>`;
-                            li.addEventListener('click', () => {
-                                // Scroll lembut ke layer peta
-                                document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
-                                // Panggil efek interaktif terbang ke Peta dan tampilkan panel
-                                setTimeout(() => {
-                                    map.flyTo([region.latitude, region.longitude], 14);
-                                    showDetailPanel(region);
-                                }, 300);
-                            });
-                            return li;
-                        };
-                        
-                        topHighest.forEach(r => listHigh.appendChild(buildItemHTML(r)));
-                        topLowest.forEach(r => listLow.appendChild(buildItemHTML(r)));
-                    }
+                    listHigh.innerHTML = '';
+                    listLow.innerHTML = '';
                     
-                    renderRanking(); // Panggil saat pemuatan data usai
-
-                    // Search Box interaction
-                    const searchInput = document.getElementById('region-search');
-                    searchInput.addEventListener('change', function(e) {
-                        const searchedName = this.value;
-                        const match = allRegions.find(r => r['kab/kota'] === searchedName);
-                        
-                        if(match) {
-                            map.flyTo([match.latitude, match.longitude], 14);
-                            showDetailPanel(match);
-                        } else if(searchedName.trim() === '') {
-                            map.setView([-7.6000, 112.9000], 8); // Reset view to East Java
-                            document.getElementById('detail-title').textContent = 'Pilih wilayah...';
-                            document.getElementById('detail-content').innerHTML = '<p class="detail-placeholder">Pilih marker pada peta atau ketik di kotak pencarian untuk melihat data indikator kemiskinan dan nutrisi.</p>';
-                        }
-                    });
+                    // Menghindari mutasi array asli
+                    const sortedByStunting = [...allRegions].sort((a, b) => b.stunting - a.stunting);
+                    
+                    // Top 5 Tertinggi
+                    const topHighest = sortedByStunting.slice(0, 5);
+                    // Top 5 Terendah
+                    const topLowest = [...sortedByStunting].reverse().slice(0, 5);
+                    
+                    const buildItemHTML = (region) => {
+                        const li = document.createElement('li');
+                        li.className = 'ranking-item';
+                        li.innerHTML = `<span class="ranking-name">${region['kab/kota']}</span><span class="ranking-value">${region.stunting}%</span>`;
+                        li.addEventListener('click', () => {
+                            // Scroll lembut ke layer peta
+                            document.getElementById('map-section').scrollIntoView({ behavior: 'smooth' });
+                            // Panggil efek interaktif terbang ke Peta dan tampilkan panel
+                            setTimeout(() => {
+                                // Pindah ke koordinat titik centroid (atau fitBounds jika dicari)
+                                map.flyTo([region.latitude, region.longitude], 12);
+                                showDetailPanel(region);
+                            }, 300);
+                        });
+                        return li;
+                    };
+                    
+                    topHighest.forEach(r => listHigh.appendChild(buildItemHTML(r)));
+                    topLowest.forEach(r => listLow.appendChild(buildItemHTML(r)));
                 }
-            })
-            .catch(err => console.error('Error fetching regions:', err));
+                
+                renderRanking(); // Panggil saat pemuatan data usai
+
+                // Search Box interaction
+                const searchInput = document.getElementById('region-search');
+                searchInput.addEventListener('change', function(e) {
+                    const searchedName = this.value;
+                    const match = allRegions.find(r => r['kab/kota'] === searchedName);
+                    
+                    if(match) {
+                        map.flyTo([match.latitude, match.longitude], 12);
+                        showDetailPanel(match);
+                    } else if(searchedName.trim() === '') {
+                        map.setView([-7.6000, 112.9000], 8); // Reset view to East Java
+                        document.getElementById('detail-title').textContent = 'Pilih wilayah...';
+                        document.getElementById('detail-content').innerHTML = '<p class="detail-placeholder">Pilih marker pada peta atau ketik di kotak pencarian untuk melihat data indikator kemiskinan dan nutrisi.</p>';
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Error fetching data:', err));
 
         // Map click interaction
         let clickMarker = null;
