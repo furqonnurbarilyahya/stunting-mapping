@@ -4,19 +4,340 @@
 
 @section('styles')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    .insight-section {
+        padding: 2rem 5%;
+        margin-bottom: 2rem;
+    }
+    .insight-layout {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .insight-card {
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    .insight-card:hover {
+        transform: translateY(-5px);
+    }
+    .insight-card.danger {
+        background-color: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-left: 4px solid #ef4444;
+    }
+    .insight-card.success {
+        background-color: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-left: 4px solid #10b981;
+    }
+    .insight-card h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
+    }
+    .insight-card.danger h3 { color: #ef4444; }
+    .insight-card.success h3 { color: #10b981; }
+    .insight-card p {
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+
+    /* Hero Overview Section Styles */
+    .hero-overview {
+        padding: 4rem 5%;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 3rem;
+        margin-bottom: 2rem;
+    }
+    .hero-content {
+        flex: 1 1 500px;
+    }
+    .hero-visual {
+        flex: 1 1 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .hero-logo {
+        max-width: 180px;
+        filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+        margin-bottom: 2rem;
+    }
+    .hero-overview-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(to right, #60a5fa, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
+    }
+    .hero-overview-desc {
+        font-size: 1.1rem;
+        color: #cbd5e1;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+    }
+    .hero-fun-fact {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+        padding: 1.2rem 1.5rem;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 2rem;
+    }
+    .hero-fun-fact-title {
+        color: #60a5fa;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .hero-fun-fact-text {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        margin: 0;
+        line-height: 1.5;
+    }
+    .hero-stats {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: center;
+    }
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        flex: 1;
+        min-width: 100px;
+        max-width: 150px;
+        transition: transform 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08);
+    }
+    .stat-value {
+        display: block;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-overview {
+            flex-direction: column-reverse;
+            text-align: center;
+            padding: 3rem 5%;
+        }
+        .hero-fun-fact {
+            text-align: left;
+        }
+        .hero-overview-title {
+            font-size: 2rem;
+        }
+        .hero-logo {
+            max-width: 150px;
+            margin-bottom: 1.5rem;
+        }
+    }
+
+    /* Animation Utility Classes */
+    html {
+        scroll-behavior: smooth;
+    }
+    .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.8s ease-out;
+    }
+    .reveal.active {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Mengapa WebGIS Dibuat Section */
+    .why-section {
+        padding: 4rem 5%;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .why-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #f8fafc;
+    }
+    .why-subtitle {
+        font-size: 1.1rem;
+        color: #94a3b8;
+        max-width: 700px;
+        margin: 0 auto 3rem auto;
+        line-height: 1.6;
+    }
+    .why-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .why-card {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
+        text-align: left;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+    }
+    .why-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.4);
+        background: rgba(30, 41, 59, 0.8);
+    }
+    .why-icon {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 1.5rem;
+        color: #60a5fa;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 12px;
+        padding: 10px;
+    }
+    .why-card h3 {
+        font-size: 1.4rem;
+        color: #f8fafc;
+        margin-bottom: 1rem;
+        font-family: 'Outfit', sans-serif;
+    }
+    .why-card p {
+        color: #cbd5e1;
+        line-height: 1.7;
+        font-size: 0.95rem;
+    }
+</style>
 @endsection
 
 @section('content')
-<section class="hero">
-    <h1 class="hero-title">Sistem Pemetaan<br>Klaster Stunting</h1>
-    <p class="hero-subtitle">Membantu mengelola, menganalisis, dan memvisualisasikan data wilayah stunting untuk pengambilan keputusan yang lebih akurat.</p>
-    <div>
-        <a href="#map-section" class="btn btn-primary">Mulai Eksplorasi</a>
+<!-- Hero Overview Section -->
+<section class="hero-overview">
+    <div class="hero-content">
+        <h1 class="hero-overview-title">Sistem Pemetaan Stunting<br>Provinsi Jawa Timur</h1>
+        <p class="hero-overview-desc">
+            Sistem pemetaan (WebGIS) ini dirancang untuk mengelola, menganalisis, dan memvisualisasikan data sebaran kerawanan stunting di seluruh wilayah Jawa Timur guna mendukung pengambilan keputusan strategis.
+        </p>
+        
+        <div class="hero-fun-fact">
+            <div class="hero-fun-fact-title">💡 Tahukah Anda?</div>
+            <p class="hero-fun-fact-text">Provinsi Jawa Timur merupakan provinsi terluas di Pulau Jawa. Wilayah ini tidak hanya mencakup daratan utama, tetapi juga memiliki wilayah kepulauan seperti Pulau Madura dan Kepulauan Kangean, menjadikannya wilayah dengan karakteristik sosiodemografis yang sangat beragam.</p>
+        </div>
+
+        <div>
+            <a href="#map-section" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-weight: 600; font-size: 1.1rem; border-radius: 8px;">Mulai Eksplorasi Peta</a>
+        </div>
+    </div>
+    
+    <div class="hero-visual">
+        <img src="{{ asset('images/Coat_of_arms_of_East_Java.png') }}" alt="Lambang Provinsi Jawa Timur" class="hero-logo">
+        <div class="hero-stats">
+            <div class="stat-card">
+                <span class="stat-value">29</span>
+                <span class="stat-label">Kabupaten</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">9</span>
+                <span class="stat-label">Kota</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">38</span>
+                <span class="stat-label">Total Wilayah</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why WebGIS Section -->
+<section class="why-section reveal" id="why-section">
+    <h2 class="why-title">Mengapa WebGIS Ini Dibuat?</h2>
+    <p class="why-subtitle">Pemetaan stunting bukan sekadar visualisasi angka, melainkan alat bantu strategis untuk memastikan intervensi kebijakan lebih tepat sasaran.</p>
+    
+    <div class="why-grid">
+        <div class="why-card reveal">
+            <div class="why-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </div>
+            <h3>Identifikasi Wilayah Prioritas</h3>
+            <p>Membantu pemerintah dan stakeholder menemukan titik kritis (hotspot) kerawanan stunting secara spasial, sehingga alokasi bantuan dan program intervensi dapat difokuskan pada daerah yang paling membutuhkan.</p>
+        </div>
+        <div class="why-card reveal" style="transition-delay: 150ms;">
+            <div class="why-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <h3>Pendukung Keputusan (DSS)</h3>
+            <p>Visualisasi dan analisis klaster LISA memberikan insight objektif berbasis data. Kebijakan percepatan penurunan stunting tidak lagi dibuat berdasarkan asumsi, melainkan fakta persebaran di lapangan.</p>
+        </div>
+        <div class="why-card reveal" style="transition-delay: 300ms;">
+            <div class="why-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+            </div>
+            <h3>Aksesibilitas Informasi Terpadu</h3>
+            <p>Memberikan kemudahan bagi berbagai instansi untuk mengakses, memantau, dan memahami kondisi stunting di Provinsi Jawa Timur secara transparan melalui satu antarmuka yang modern dan responsif.</p>
+        </div>
+    </div>
+
+    <div class="why-reference reveal" style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: left; max-width: 900px; margin-left: auto; margin-right: auto;">
+        <h3 style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            Referensi Ilmiah
+        </h3>
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+            Pengembangan website pemetaan dan analisis spasial stunting ini didasarkan pada penelitian dan metodologi ilmiah yang telah digunakan dalam kajian analisis spasial kesehatan masyarakat. Pendekatan spasial menggunakan metode LISA (Local Indicator of Spatial Association) digunakan untuk mengidentifikasi pola persebaran stunting, hotspot, coldspot, serta wilayah prioritas penanganan secara lebih terukur dan berbasis data.
+        </p>
+        <a href="https://ejurnal.stmik-budidarma.ac.id/index.php/JSON/article/view/8877/4195" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 0.5rem; color: #60a5fa; text-decoration: none; font-size: 0.9rem; margin-top: 0.5rem; transition: color 0.3s ease;">
+            <span>Lihat jurnal dan studi terkait analisis spasial stunting kab/kota Provinsi Jawa Timur</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+        </a>
     </div>
 </section>
 
 <!-- Map Section -->
-<section id="map-section" class="map-section">
+<section id="map-section" class="map-section reveal">
     <h2 class="section-title">Peta Persebaran Stunting</h2>
     <div class="map-controls">
         <div class="filter-group">
@@ -55,8 +376,24 @@
     </div>
 </section>
 
+<!-- Insight Section -->
+<section class="insight-section reveal" id="insight-section">
+    <h1 class="section-title">Insight Spasial</h1>
+    <h2 class="section-subtitle">Interpretasi Pola Persebaran Stunting</h2>
+    <div class="insight-layout">
+        <div class="insight-card danger">
+            <h3><span>🔴</span> Pola Hotspot (Wilayah Prioritas)</h3>
+            <p id="hotspot-insight-text">Memuat insight spasial...</p>
+        </div>
+        <div class="insight-card success">
+            <h3><span>🟢</span> Pola Coldspot (Wilayah Terkendali)</h3>
+            <p id="coldspot-insight-text">Memuat insight spasial...</p>
+        </div>
+    </div>
+</section>
+
 <!-- Ranking Section -->
-<section class="ranking-section" id="ranking-section">
+<section class="ranking-section reveal" id="ranking-section">
     <h1 class="section-title">Data Statistik</h1>
     <h2 class="section-subtitle">Prioritas Intervensi Stunting</h2>
     <div class="ranking-layout">
@@ -76,32 +413,14 @@
 </section>
 
 <!-- Chart Section -->
-<section class="chart-section" id="chart-section">
-    <h2 class="section-title">Visualisasi Statistik Stunting per Wilayah</h2>
+<section class="chart-section reveal" id="chart-section">
+    <h2 class="section-title">Visualisasi Statistik Stunting per Wilayah Kab/Kota Provinsi Jawa Timur</h2>
     <div class="chart-container">
         <canvas id="stuntingChart"></canvas>
     </div>
 </section>
 
-<section class="features-grid">
-    <div class="feature-card">
-        <div class="feature-icon">📊</div>
-        <h3 class="feature-title">Manajemen Data Wilayah</h3>
-        <p class="feature-desc">Kelola data administrasi dan demografi dengan sistem yang terintegrasi dan akurat.</p>
-    </div>
-    
-    <div class="feature-card">
-        <div class="feature-icon">📈</div>
-        <h3 class="feature-title">Analisis Klaster Stunting</h3>
-        <p class="feature-desc">Identifikasi wilayah dengan tingkat stunting tinggi dan prioritas intervensi secara otomatis.</p>
-    </div>
-    
-    <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3 class="feature-title">Akses Aman & Terpusat</h3>
-        <p class="feature-desc">Sistem yang aman dengan pengelolaan otorisasi pengguna secara menyeluruh.</p>
-    </div>
-</section>
+
 @endsection
 
 @section('scripts')
@@ -162,6 +481,30 @@
             title.textContent = "Detail " + (region['kab/kota'] || 'Wilayah');
             content.innerHTML = '';
             
+            // Deskripsi Variabel
+            const varDescriptions = {
+                "stunting": "Persentase balita yang mengalami kondisi stunting pada setiap kabupaten/kota di Provinsi Jawa Timur. Variabel ini digunakan untuk menggambarkan tingkat permasalahan gizi kronis akibat kekurangan asupan nutrisi dalam jangka panjang yang berdampak pada pertumbuhan dan perkembangan anak.",
+                "hamil": "Persentase cakupan pelayanan kesehatan bagi ibu hamil pada setiap wilayah. Variabel ini mencerminkan tingkat akses dan pemanfaatan layanan kesehatan maternal selama masa kehamilan.",
+                "tambah_darah": "Persentase ibu hamil yang memperoleh dan mengonsumsi tablet tambah darah sebagai upaya pencegahan anemia selama kehamilan. Variabel ini berkaitan dengan kualitas intervensi kesehatan ibu dan risiko gangguan pertumbuhan janin.",
+                "persalinan_nakes": "Persentase proses persalinan yang ditangani atau dibantu oleh tenaga kesehatan profesional. Variabel ini menunjukkan tingkat akses masyarakat terhadap layanan persalinan yang aman dan terstandarisasi.",
+                "vit_a": "Persentase cakupan pemberian vitamin A pada anak usia 6–59 bulan. Variabel ini digunakan untuk menggambarkan upaya pemenuhan kebutuhan mikronutrien penting bagi pertumbuhan dan daya tahan tubuh anak.",
+                "bblr": "Persentase bayi yang lahir dengan berat badan rendah (kurang dari 2500 gram). Variabel ini menjadi indikator risiko kesehatan bayi baru lahir yang dapat berpengaruh terhadap potensi stunting di masa mendatang.",
+                "imd": "Persentase pelaksanaan Inisiasi Menyusu Dini (IMD), yaitu proses pemberian ASI pertama dalam satu jam setelah kelahiran bayi. Variabel ini mencerminkan praktik awal pemberian nutrisi dan ikatan ibu-anak setelah persalinan.",
+                "asi_baduta": "Persentase pemberian Air Susu Ibu (ASI) pada anak usia bawah dua tahun (baduta). Variabel ini menunjukkan keberlanjutan praktik pemberian ASI sebagai sumber nutrisi utama pada masa awal pertumbuhan anak.",
+                "lama_asi": "Rata-rata atau persentase lama pemberian ASI eksklusif kepada bayi sesuai rekomendasi kesehatan. Variabel ini digunakan untuk melihat kualitas pola pemberian nutrisi pada bayi usia dini.",
+                "asi_pendamping": "Persentase pemberian makanan pendamping ASI (MP-ASI) pada bayi dan balita. Variabel ini menggambarkan pemenuhan kebutuhan nutrisi tambahan setelah masa ASI eksklusif.",
+                "imunisasi": "Persentase cakupan imunisasi dasar lengkap pada bayi atau balita. Variabel ini menunjukkan tingkat perlindungan anak terhadap berbagai penyakit infeksi yang dapat memengaruhi kondisi kesehatan dan pertumbuhan.",
+                "vit_a_6_11": "Persentase pemberian vitamin A pada anak usia 6–11 bulan. Variabel ini digunakan untuk melihat cakupan intervensi gizi pada kelompok usia bayi awal.",
+                "vit_a_12_59": "Persentase pemberian vitamin A pada anak usia 12–59 bulan. Variabel ini menggambarkan cakupan suplementasi vitamin A pada kelompok usia balita.",
+                "vit_a_6_59": "Persentase total cakupan pemberian vitamin A pada anak usia 6–59 bulan sebagai indikator intervensi gizi mikronutrien secara umum.",
+                "cakupan": "Persentase cakupan pelayanan kesehatan umum pada setiap wilayah. Variabel ini menunjukkan tingkat akses masyarakat terhadap fasilitas dan layanan kesehatan dasar.",
+                "jiwa_rt": "Rata-rata jumlah jiwa dalam satu rumah tangga (RT) pada setiap wilayah. Variabel ini digunakan untuk menggambarkan kepadatan hunian dan kondisi sosial demografi masyarakat.",
+                "sanitasi": "Persentase rumah tangga yang memiliki akses terhadap sanitasi layak. Variabel ini berkaitan dengan kondisi lingkungan sehat dan pencegahan penyakit berbasis lingkungan.",
+                "air_minum": "Persentase rumah tangga dengan akses terhadap sumber air minum layak dan aman. Variabel ini mencerminkan kualitas fasilitas dasar kesehatan lingkungan masyarakat.",
+                "ipm": "Indeks Pembangunan Manusia (IPM) pada setiap kabupaten/kota yang mencerminkan kualitas pembangunan manusia berdasarkan aspek kesehatan, pendidikan, dan standar hidup layak.",
+                "miskin": "Persentase penduduk miskin pada setiap wilayah. Variabel ini digunakan untuk menggambarkan kondisi sosial ekonomi masyarakat yang berpotensi memengaruhi tingkat stunting."
+            };
+
             // Eksklusi kolom yang tidak boleh tampil sesuai issue #14
             const excludeFields = ['lisa_cluster', 'id', 'created_at', 'updated_at', 'latitude', 'longitude', 'kab/kota'];
             
@@ -169,12 +512,41 @@
                 if (!excludeFields.includes(key)) {
                     // Fallback untuk handling data kosong
                     const displayValue = (value === null || value === '') ? '-' : value;
-                    const formatKey = key.replace(/_/g, ' ');
+                    const formatKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const desc = varDescriptions[key];
+                    const randomId = Math.random().toString(36).substr(2, 9);
+                    const toggleId = 'desc-' + key + '-' + randomId;
                     
+                    const descHtml = desc ? `
+                        <div id="${toggleId}" style="max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.3s ease, opacity 0.3s ease;">
+                            <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem; padding-left: 0.75rem; border-left: 2px solid rgba(59, 130, 246, 0.5); font-weight: normal; line-height: 1.5;">
+                                ${desc}
+                            </div>
+                        </div>
+                    ` : '';
+                    
+                    const iconHtml = desc ? `
+                        <button onclick="
+                            const content = document.getElementById('${toggleId}');
+                            const isCollapsed = content.style.maxHeight === '0px' || content.style.maxHeight === '';
+                            content.style.maxHeight = isCollapsed ? content.scrollHeight + 'px' : '0px';
+                            content.style.opacity = isCollapsed ? '1' : '0';
+                            this.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+                        " style="background: none; border: none; color: #60a5fa; cursor: pointer; padding: 0 0.25rem; margin-left: 0.25rem; transition: transform 0.3s ease; display: inline-flex; align-items: center;" aria-label="Toggle Description">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                    ` : '';
+
                     const itemHtml = `
-                        <div class="detail-item">
-                            <span class="detail-label">${formatKey}</span>
-                            <span class="detail-value">${displayValue}</span>
+                        <div class="detail-item-container" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0.75rem 0; display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div style="font-weight: 600; color: #cbd5e1; flex: 1; padding-right: 1rem;">${formatKey}</div>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div style="font-weight: 700; color: #f8fafc; text-align: right;">${displayValue}</div>
+                                    <div>${iconHtml}</div>
+                                </div>
+                            </div>
+                            ${descHtml}
                         </div>
                     `;
                     content.insertAdjacentHTML('beforeend', itemHtml);
@@ -460,6 +832,33 @@
                 
                 renderRanking(); // Panggil saat pemuatan data usai
 
+                // Fungsi membangun Insight Spasial
+                function renderInsight() {
+                    const hotspots = allRegions.filter(r => r.lisa_cluster === 1).map(r => r['kab/kota']);
+                    const coldspots = allRegions.filter(r => r.lisa_cluster === 3).map(r => r['kab/kota']);
+
+                    const hotspotText = document.getElementById('hotspot-insight-text');
+                    const coldspotText = document.getElementById('coldspot-insight-text');
+
+                    if (hotspotText) {
+                        if (hotspots.length > 0) {
+                            hotspotText.innerHTML = `Berdasarkan analisis klaster spasial, terdapat <b>${hotspots.length}</b> kabupaten/kota yang teridentifikasi sebagai daerah Hotspot (kerawanan tinggi stunting yang saling berdekatan). Wilayah ini meliputi: <b>${hotspots.join(', ')}</b>.<br><br>Secara spasial, klaster hotspot ini dominan terkonsentrasi di kawasan <b>Madura dan Tapal Kuda</b>. Hal ini mengindikasikan perlunya intervensi kebijakan lintas wilayah yang terfokus pada kawasan tersebut untuk mencegah efek limpahan (spillover effect).`;
+                        } else {
+                            hotspotText.innerHTML = 'Saat ini tidak teridentifikasi adanya klaster Hotspot (High-High) yang signifikan pada peta persebaran stunting.';
+                        }
+                    }
+
+                    if (coldspotText) {
+                        if (coldspots.length > 0) {
+                            coldspotText.innerHTML = `Analisis menunjukkan <b>${coldspots.length}</b> wilayah sebagai klaster Coldspot (angka stunting rendah yang dikelilingi wilayah dengan angka rendah pula). Wilayah tersebut adalah: <b>${coldspots.join(', ')}</b>.<br><br>Pola ini menunjukkan bahwa wilayah coldspot cenderung berada pada <b>kawasan perkotaan</b> dengan akses layanan kesehatan, infrastruktur, serta kondisi sosial ekonomi yang lebih baik.`;
+                        } else {
+                            coldspotText.innerHTML = 'Saat ini tidak teridentifikasi adanya klaster Coldspot (Low-Low) yang signifikan pada peta persebaran stunting.';
+                        }
+                    }
+                }
+                
+                renderInsight(); // Panggil untuk generate narasi insight
+
                 // Search Box interaction
                 const searchInput = document.getElementById('region-search');
                 searchInput.addEventListener('change', function(e) {
@@ -516,6 +915,20 @@
             } else {
                 alert("Browser Anda tidak mendukung Geolocation.");
             }
+        });
+
+        // Scroll Reveal Animation
+        const reveals = document.querySelectorAll(".reveal");
+        const revealOnScroll = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("active");
+                }
+            });
+        }, { threshold: 0.1 });
+
+        reveals.forEach(reveal => {
+            revealOnScroll.observe(reveal);
         });
     });
 </script>

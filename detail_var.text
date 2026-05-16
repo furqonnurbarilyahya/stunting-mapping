@@ -1,0 +1,39 @@
+"stunting": "Persentase balita yang mengalami kondisi stunting pada setiap kabupaten/kota di Provinsi Jawa Timur. Variabel ini digunakan untuk menggambarkan tingkat permasalahan gizi kronis akibat kekurangan asupan nutrisi dalam jangka panjang yang berdampak pada pertumbuhan dan perkembangan anak.",
+  
+  "hamil": "Persentase cakupan pelayanan kesehatan bagi ibu hamil pada setiap wilayah. Variabel ini mencerminkan tingkat akses dan pemanfaatan layanan kesehatan maternal selama masa kehamilan.",
+  
+  "tambah_darah": "Persentase ibu hamil yang memperoleh dan mengonsumsi tablet tambah darah sebagai upaya pencegahan anemia selama kehamilan. Variabel ini berkaitan dengan kualitas intervensi kesehatan ibu dan risiko gangguan pertumbuhan janin.",
+  
+  "persalinan_nakes": "Persentase proses persalinan yang ditangani atau dibantu oleh tenaga kesehatan profesional. Variabel ini menunjukkan tingkat akses masyarakat terhadap layanan persalinan yang aman dan terstandarisasi.",
+  
+  "vit_a": "Persentase cakupan pemberian vitamin A pada anak usia 6–59 bulan. Variabel ini digunakan untuk menggambarkan upaya pemenuhan kebutuhan mikronutrien penting bagi pertumbuhan dan daya tahan tubuh anak.",
+  
+  "bblr": "Persentase bayi yang lahir dengan berat badan rendah (kurang dari 2500 gram). Variabel ini menjadi indikator risiko kesehatan bayi baru lahir yang dapat berpengaruh terhadap potensi stunting di masa mendatang.",
+  
+  "imd": "Persentase pelaksanaan Inisiasi Menyusu Dini (IMD), yaitu proses pemberian ASI pertama dalam satu jam setelah kelahiran bayi. Variabel ini mencerminkan praktik awal pemberian nutrisi dan ikatan ibu-anak setelah persalinan.",
+  
+  "asi_baduta": "Persentase pemberian Air Susu Ibu (ASI) pada anak usia bawah dua tahun (baduta). Variabel ini menunjukkan keberlanjutan praktik pemberian ASI sebagai sumber nutrisi utama pada masa awal pertumbuhan anak.",
+  
+  "lama_asi": "Rata-rata atau persentase lama pemberian ASI eksklusif kepada bayi sesuai rekomendasi kesehatan. Variabel ini digunakan untuk melihat kualitas pola pemberian nutrisi pada bayi usia dini.",
+  
+  "asi_pendamping": "Persentase pemberian makanan pendamping ASI (MP-ASI) pada bayi dan balita. Variabel ini menggambarkan pemenuhan kebutuhan nutrisi tambahan setelah masa ASI eksklusif.",
+  
+  "imunisasi": "Persentase cakupan imunisasi dasar lengkap pada bayi atau balita. Variabel ini menunjukkan tingkat perlindungan anak terhadap berbagai penyakit infeksi yang dapat memengaruhi kondisi kesehatan dan pertumbuhan.",
+  
+  "vit_a_6_11": "Persentase pemberian vitamin A pada anak usia 6–11 bulan. Variabel ini digunakan untuk melihat cakupan intervensi gizi pada kelompok usia bayi awal.",
+  
+  "vit_a_12_59": "Persentase pemberian vitamin A pada anak usia 12–59 bulan. Variabel ini menggambarkan cakupan suplementasi vitamin A pada kelompok usia balita.",
+  
+  "vit_a_6_59": "Persentase total cakupan pemberian vitamin A pada anak usia 6–59 bulan sebagai indikator intervensi gizi mikronutrien secara umum.",
+  
+  "cakupan": "Persentase cakupan pelayanan kesehatan umum pada setiap wilayah. Variabel ini menunjukkan tingkat akses masyarakat terhadap fasilitas dan layanan kesehatan dasar.",
+  
+  "jiwa_rt": "Rata-rata jumlah jiwa dalam satu rumah tangga (RT) pada setiap wilayah. Variabel ini digunakan untuk menggambarkan kepadatan hunian dan kondisi sosial demografi masyarakat.",
+  
+  "sanitasi": "Persentase rumah tangga yang memiliki akses terhadap sanitasi layak. Variabel ini berkaitan dengan kondisi lingkungan sehat dan pencegahan penyakit berbasis lingkungan.",
+  
+  "air_minum": "Persentase rumah tangga dengan akses terhadap sumber air minum layak dan aman. Variabel ini mencerminkan kualitas fasilitas dasar kesehatan lingkungan masyarakat.",
+  
+  "ipm": "Indeks Pembangunan Manusia (IPM) pada setiap kabupaten/kota yang mencerminkan kualitas pembangunan manusia berdasarkan aspek kesehatan, pendidikan, dan standar hidup layak.",
+  
+  "miskin": "Persentase penduduk miskin pada setiap wilayah. Variabel ini digunakan untuk menggambarkan kondisi sosial ekonomi masyarakat yang berpotensi memengaruhi tingkat stunting."

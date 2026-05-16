@@ -12,6 +12,63 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <style>
+        html { scroll-behavior: smooth; }
+        .app-footer {
+            background-color: #0f172a;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 4rem 5% 1rem;
+            color: #94a3b8;
+            margin-top: 4rem;
+        }
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+        .footer-brand h3 {
+            color: #f8fafc;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-family: 'Outfit', sans-serif;
+        }
+        .footer-brand p {
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .footer-links h4, .footer-contact h4 {
+            color: #f8fafc;
+            margin-bottom: 1.2rem;
+            font-size: 1.1rem;
+        }
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer-links a:hover {
+            color: #60a5fa;
+        }
+        .footer-contact p {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+    </style>
     @yield('styles')
 </head>
 <body>
@@ -30,6 +87,7 @@
 
             <div class="navbar-menu" id="navbar-menu">
                 <a href="{{ route('home') }}" class="nav-link">Home</a>
+                <a href="#why-section" class="nav-link">Tentang Kami</a>
                 <a href="#ranking-section" class="nav-link">Statistik</a>
                 <a href="{{ url('/import') }}" class="nav-link">Import Data</a>
             </div>
@@ -45,8 +103,30 @@
     </main>
 
     <!-- Footer -->
-    <footer>
-        <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>Stunting Mapping</h3>
+                <p>Sistem Informasi Geografis untuk memetakan, menganalisis, dan mendukung keputusan intervensi stunting di wilayah Provinsi Jawa Timur secara tepat sasaran.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Navigasi</h4>
+                <ul>
+                    <li><a href="{{ route('home') }}">Beranda</a></li>
+                    <li><a href="#why-section">Tentang Kami</a></li>
+                    <li><a href="#ranking-section">Data Statistik</a></li>
+                    <li><a href="#map-section">Peta Persebaran</a></li>
+                </ul>
+            </div>
+            <div class="footer-contact">
+                <h4>Instansi</h4>
+                <p>Pemerintah Provinsi Jawa Timur</p>
+                <p>Dinas Kesehatan & BAPPEDA</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+        </div>
     </footer>
     @yield('scripts')
 
