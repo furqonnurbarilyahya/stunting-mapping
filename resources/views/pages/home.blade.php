@@ -262,36 +262,62 @@
             });
         }
 
+        function normalizeRegionName(name) {
+            if (!name) return '';
+            // Hapus semua karakter non-alfanumerik (spasi, titik, koma, dsb)
+            let n = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            // Hapus prefix kab atau kabupaten di awal string
+            if (n.startsWith('kabupaten')) {
+                n = n.substring(9);
+            } else if (n.startsWith('kab')) {
+                n = n.substring(3);
+            }
+            return n;
+        }
+
         function renderGeoJson(filteredRegions) {
             if (geoJsonLayer) {
                 map.removeLayer(geoJsonLayer);
+                // Hapus tooltips manual jika ada
+                if (geoJsonLayer.tooltips) {
+                    geoJsonLayer.tooltips.forEach(t => map.removeLayer(t));
+                }
             }
 
             if (!geoJsonData) return;
 
+            // Inisialisasi array untuk menyimpan manual tooltips
+            const tooltips = [];
+
             geoJsonLayer = L.geoJSON(geoJsonData, {
                 style: function(feature) {
                     const regionName = feature.properties.WADMKK;
-                    const region = filteredRegions.find(r => r['kab/kota'].toLowerCase() === regionName.toLowerCase());
+                    
+                    if (!regionName) {
+                        return { fillColor: 'transparent', weight: 0, opacity: 0, fillOpacity: 0 };
+                    }
+                    
+                    const normalizedGeoName = normalizeRegionName(regionName);
+                    const region = filteredRegions.find(r => normalizeRegionName(r['kab/kota']) === normalizedGeoName);
 
                     let hexColor = 'transparent';
                     let fillOpacity = 0;
                     let weight = 1;
-                    let color = '#444'; // Subtle border for non-matching regions
+                    let color = '#444'; 
 
                     if (region) {
                         fillOpacity = 0.7;
                         weight = 2;
-                        color = '#ffffff'; // Tegas batas (stroke) untuk mencegah bleeding warna
+                        color = '#ffffff'; 
                         
                         if (region.lisa_cluster === 1) {
-                            hexColor = '#ef4444'; // Hotspot
+                            hexColor = '#ef4444'; 
                         } else if (region.lisa_cluster === 2 || region.lisa_cluster === 4) {
-                            hexColor = '#c2c2c2'; // Spatial Outlier
+                            hexColor = '#c2c2c2'; 
                         } else if (region.lisa_cluster === 3) {
-                            hexColor = '#10b981'; // Coldspot
+                            hexColor = '#10b981'; 
                         } else {
-                            hexColor = '#94a3b8'; // Tidak terklasifikasi
+                            hexColor = '#94a3b8'; 
                         }
                     }
 
@@ -305,14 +331,29 @@
                 },
                 onEachFeature: function(feature, layer) {
                     const regionName = feature.properties.WADMKK;
-                    const region = allRegions.find(r => r['kab/kota'].toLowerCase() === regionName.toLowerCase());
+                    if (!regionName) return;
 
-                    // Label nama kota permanen
-                    layer.bindTooltip(regionName, { 
-                        permanent: true, 
-                        direction: 'center', 
-                        className: 'region-tooltip'
-                    });
+                    const normalizedGeoName = normalizeRegionName(regionName);
+                    const region = allRegions.find(r => normalizeRegionName(r['kab/kota']) === normalizedGeoName);
+
+                    const displayName = region ? region['kab/kota'] : regionName;
+
+                    // Buat tooltip manual untuk mencegah Leaflet crash (Error: latlngs not passed)
+                    // saat menghitung centroid dari MultiPolygon yang kompleks.
+                    try {
+                        const center = layer.getBounds().getCenter();
+                        const tooltip = L.tooltip({ 
+                            permanent: true, 
+                            direction: 'center', 
+                            className: 'region-tooltip'
+                        })
+                        .setLatLng(center)
+                        .setContent(displayName);
+                        
+                        tooltips.push(tooltip);
+                    } catch (e) {
+                        console.warn("Gagal membuat tooltip untuk:", displayName, e);
+                    }
 
                     if (region) {
                         let clusterName = 'Tidak Terklasifikasi';
@@ -339,18 +380,24 @@
                                 }
                             },
                             mouseout: function(e) {
-                                geoJsonLayer.resetStyle(e.target);
+                                if (geoJsonLayer) {
+                                    geoJsonLayer.resetStyle(e.target);
+                                }
                             }
                         });
                     }
                 }
             }).addTo(map);
+
+            // Simpan tooltips ke layer dan tampilkan ke map
+            geoJsonLayer.tooltips = tooltips;
+            tooltips.forEach(t => t.addTo(map));
         }
 
-        // Fetch Regions API & GeoJSON Data
+        // Fetch Regions API & GeoJSON Data dengan Cache Buster
         Promise.all([
-            fetch('/api/regions').then(res => res.json()),
-            fetch('{{ asset("geojson/kab_kota_jatim.geojson") }}').then(res => res.json())
+            fetch('/api/regions?v=' + new Date().getTime()).then(res => res.json()),
+            fetch('{{ asset("geojson/kab_kota_jatim.geojson") }}?v=' + new Date().getTime()).then(res => res.json())
         ])
         .then(([apiResponse, geojson]) => {
             if(apiResponse.success && apiResponse.data) {
